@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "26.0.0"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
 
     defaultConfig {
         applicationId "com.sample.multitrack106"
         minSdkVersion 19
-        targetSdkVersion 23
+        targetSdkVersion 28
     }
 
     buildTypes {
@@ -25,6 +25,6 @@ repositories{
 }
 
 dependencies {
-    compile(name: 'module', ext: 'aar')
-    compile 'com.android.support:support-v4:23.4.0'
+    implementation(name: 'module', ext: 'aar')
+    implementation 'com.android.support:support-v4:23.4.0'
 }

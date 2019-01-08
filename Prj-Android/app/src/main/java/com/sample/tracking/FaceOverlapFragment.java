@@ -1,30 +1,37 @@
 package com.sample.tracking;
 
-import java.util.List;
-
-import com.zeusee.zmobileapi.AuthCallback;
-import com.zeusee.zmobileapi.STUtils;
-
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Paint.Style;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.Paint.Style;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import com.zeusee.zmobileapi.AuthCallback;
+import com.zeusee.zmobileapi.STUtils;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import zeusees.tracking.Face;
 import zeusees.tracking.FaceTracking;
@@ -190,7 +197,79 @@ public class FaceOverlapFragment extends CameraOverlapFragment {
             };
 
             if (authCallback != null) {
-                mMultiTrack106 = new FaceTracking("/sdcard/ZeuseesFaceTracking/models");
+                mMultiTrack106 = new FaceTracking(Environment.getExternalStorageDirectory()+"/ZeuseesFaceTracking/models");
+            }
+
+        }
+    }
+
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    String[] list = getActivity().getAssets().list("ZeuseesFaceTracking/models");
+                    File dstDir = new File(Environment.getExternalStorageDirectory(), "ZeuseesFaceTracking/models");
+                    List<String> fileNames = Arrays.asList(list);
+                    if (!dstDir.exists()) {
+                        dstDir.mkdirs();
+                        copyData(dstDir, fileNames);
+                    } else {
+                        List<File> files = Arrays.asList(dstDir.listFiles());
+                        for (int i = 0; i < fileNames.size(); i++) {
+                            if (files.get(i).getAbsolutePath().contains(fileNames.get(i))) {
+                                //do nothing
+                            } else {
+                                copyData(dstDir, fileNames);
+                                break;
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }.start();
+    }
+
+    private void copyData(File dstDir, List<String> fileNames){
+        for (String fileName : fileNames) {
+            File dstFile = new File(dstDir, fileName);
+            InputStream open;
+            BufferedInputStream bufferedInputStream = null;
+            FileOutputStream fileOutputStream = null;
+            try {
+                open = getActivity().getAssets().open(fileName);
+                bufferedInputStream = new BufferedInputStream(open);
+                fileOutputStream = new FileOutputStream(dstFile);
+                byte[] buffer = new byte[128];
+                int len;
+                while ((len = bufferedInputStream.read(buffer)) != -1) {
+                    fileOutputStream.write(buffer, 0, len);
+                }
+                fileOutputStream.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (bufferedInputStream != null) {
+                    try {
+                        bufferedInputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (fileOutputStream != null) {
+                    try {
+                        fileOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
 
         }
